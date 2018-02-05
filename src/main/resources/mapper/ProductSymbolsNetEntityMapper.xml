@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.alphalion.crawl.mapper.ProductSymbolsNetEntityMapper">
+
+    <insert id="batchInsertSymbolsIgnoreErrors" parameterType="java.util.List">
+        insert ignore into product_symbols_net(
+        cusip,
+        isin,
+        symbol,
+        invalid_value
+        )
+        values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (
+            #{item.cusip},
+            #{item.isin},
+            #{item.symbol},
+            #{item.invalid_value}
+            )
+        </foreach>
+    </insert>
+
+
+</mapper>

@@ -1,0 +1,9 @@
+一、爬取产品信息
+1、获取invalid_message中的数据
+2、根据invalid_value和ISIN关键字爬取网站中相关产品信息
+3、若查询到产品信息，则根据ISIN取值查询产品库product_symbols中产品是否已存在，
+    若产品库中已经存在ISIN产品，则更新产品库中的 product_id 和 type_of_symbol="CUSIP" 的记录的 business_thru_date="当天日期"、
+        同时插入一条CUSIP码为 invalid_value，business_from_date="当天日期"，business_thru_date="4821-12-27" 的记录；
+    若产品库中不存在ISIN产品，则需要录入 type_of_symbol="CUSIP" 和 type_of_symbol="ISIN" 的记录。
+   若未查询到产品信息，则直接录入 type_of_symbol="CUSIP"、symbol=invalid_value、product_id=select MAX(product_id)+1 from product
+   的新纪录，同时还要在product中录入相关信息。
