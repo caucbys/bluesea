@@ -1,5 +1,6 @@
 package com.alphalion.crawl.controller;
 
+import com.alphalion.crawl.controller.dto.Result;
 import com.alphalion.crawl.service.ICrawlService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -23,11 +24,19 @@ public class CrawlController {
     private ICrawlService crawlService;
 
 
-    @ApiOperation(httpMethod = "POST",value = "启动爬取线程接口",notes = "启动爬取线程接口")
-    @RequestMapping(method = RequestMethod.POST,value = "/crawlProductSymbols")
+    @ApiOperation(httpMethod = "POST", value = "启动爬取线程接口", notes = "启动爬取线程接口")
+    @RequestMapping(method = RequestMethod.POST, value = "/crawlProductSymbols")
     @ResponseBody
-    public String crawlProductSymbols(){
+    public String crawlProductSymbols() {
         crawlService.crawlProductIdentifiers();
         return "crawl process has started";
+    }
+
+    @ApiOperation(httpMethod = "POST", value = "爬取symbols数据", notes = "解析PDF文档")
+    @RequestMapping(method = RequestMethod.POST, value = "/crawlProductSymbolsFromPDF")
+    @ResponseBody
+    public String crawlProductSymbolsFromPDF() {
+        crawlService.crawlSymbolsFromPDF();
+        return "执行成功";
     }
 }

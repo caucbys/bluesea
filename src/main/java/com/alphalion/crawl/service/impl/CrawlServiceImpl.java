@@ -56,7 +56,7 @@ public class CrawlServiceImpl implements ICrawlService {
         try {
             Set<ProductSymbolsNetEntity> set = PdfUtil.readContent(SymbolsConstant.WESPATH_PDF_UR);
             if (null != set && !set.isEmpty()) {
-                int rows = productSymbolsNetEntityMapper.insertList(new ArrayList<>(set));
+                int rows = productSymbolsNetEntityMapper.batchInsertSymbolsIgnoreErrors(new ArrayList<>(set));
                 System.out.println("wait for insert ProductSymbolsNetEntity rows=" + set.size() + ".");
                 System.out.println("insert ProductSymbolsNetEntity rows=" + rows + " successfully.");
             }
@@ -176,7 +176,7 @@ public class CrawlServiceImpl implements ICrawlService {
                     e.printStackTrace();
                 }
             }
-            productSymbolsNetEntityMapper.insertList(new ArrayList<>(productSymbolsNetEntitySet));
+            productSymbolsNetEntityMapper.batchInsertSymbolsIgnoreErrors(new ArrayList<>(productSymbolsNetEntitySet));
             System.out.println(threadName + " ended...");
         }
     }
