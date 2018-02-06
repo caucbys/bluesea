@@ -1,8 +1,6 @@
 package com.alphalion.crawl.application.util;
 
 import com.google.common.base.Strings;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -159,7 +157,10 @@ public class SymbolUtil {
         }
         try {
             boolean valid = checkSum(CUSIP);
-            return valid;
+            if (!valid) {
+                return checkWKN(CUSIP);
+            }
+            return true;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -196,22 +197,40 @@ public class SymbolUtil {
         return false;
     }
 
-    public static boolean checkSYMBOL(String SYMBOL){
-        if(Strings.isNullOrEmpty(SYMBOL)){
+    public static boolean checkSYMBOL(String SYMBOL) {
+        if (Strings.isNullOrEmpty(SYMBOL)) {
             return false;
         }
 
-        String pattern="^[0-9a-zA-Z]+$";
+        String pattern = "^[0-9a-zA-Z]+$";
         boolean matches = Pattern.matches(pattern, SYMBOL);
         return matches;
+    }
+
+    public static boolean checkWKN(String wkn) {
+        if (Strings.isNullOrEmpty(wkn)) {
+            return false;
+        }
+
+        if (wkn.length() == 9) {
+            return true;
+        }
+
+        return false;
     }
 
 
     public static void main(String[] args) {
 
-        System.out.println("res = " +checkCUSIP("01903Q207"));
+        System.out.println("res = " + checkISIN("IL0010829658"));
     }
 
 
+    public static boolean checkInvalidValue(String invalidValue) {
+        if (Strings.isNullOrEmpty(invalidValue)) {
+            return false;
+        }
 
+        return true;
+    }
 }

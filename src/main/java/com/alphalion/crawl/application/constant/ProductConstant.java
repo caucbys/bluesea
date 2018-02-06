@@ -171,7 +171,9 @@ public class ProductConstant {
 
         public static final String SYMBOL = "SYMBOL";
 
-        public static final Set<String> SET = Sets.newHashSet(RIC, ALTERNATE_SYMBOL, BLOOMBERG, CUSIP, SEDOL, ADP, ISIN, CINS, IDC, SYMBOL);
+        public static final String WKN = "WKN";
+
+        public static final Set<String> SET = Sets.newHashSet(RIC, ALTERNATE_SYMBOL, BLOOMBERG, CUSIP, SEDOL, ADP, ISIN, CINS, IDC, SYMBOL,WKN);
 
         public static final Set<String> REQUIRED = Sets.newHashSet(CUSIP, ISIN);
     }

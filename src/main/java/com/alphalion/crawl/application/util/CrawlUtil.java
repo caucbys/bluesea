@@ -3,6 +3,7 @@ package com.alphalion.crawl.application.util;
 import com.alibaba.fastjson.JSON;
 import com.alphalion.crawl.application.constant.ProductConstant;
 import com.alphalion.crawl.mapper.entity.ProductSymbolsNetEntity;
+import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Connection;
@@ -91,7 +92,13 @@ public class CrawlUtil {
                     if (SymbolUtil.checkCUSIP(CUSIP)) {
                         extenedProduct.setCusip(CUSIP);
                     }
-                } else if (StringUtils.isEmpty(extenedProduct.getSymbol())) {
+                } else if(str.indexOf(ProductConstant.SymbolTypes.WKN)>-1 && Strings.isNullOrEmpty(extenedProduct.getCusip())){
+                    String WKN = str.substring(ProductConstant.SymbolTypes.WKN.length() + 1).trim();
+                    if (SymbolUtil.checkWKN(WKN)) {
+                        extenedProduct.setCusip(WKN);
+                    }
+                }
+                else if (StringUtils.isEmpty(extenedProduct.getSymbol())) {
                     int index = str.toUpperCase().indexOf(ProductConstant.SymbolTypes.SYMBOL);
                     if (index > -1) {
                         String symbol = str.toUpperCase().substring(index + ProductConstant.SymbolTypes.SYMBOL.length() + 1).trim();

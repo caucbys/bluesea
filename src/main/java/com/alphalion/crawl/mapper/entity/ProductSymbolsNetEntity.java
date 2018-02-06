@@ -43,7 +43,9 @@ public class ProductSymbolsNetEntity {
 
     public String getCusip() {
         if (SymbolUtil.checkISIN(this.isin)) {
-            this.cusip = this.isin.substring(2, 11);
+            if (!SymbolUtil.checkCUSIP(this.cusip)) {
+                this.cusip = this.isin.substring(2, 11);
+            }
         }
         return cusip;
     }
