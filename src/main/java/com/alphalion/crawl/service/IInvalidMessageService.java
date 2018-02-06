@@ -1,7 +1,6 @@
 package com.alphalion.crawl.service;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author SongBaoYu
@@ -11,8 +10,10 @@ public interface IInvalidMessageService {
 
     void seekProduct(List<String> invalidValues);
 
-    Set<String> processInvalidProducts();
+    List<String> processInvalidProducts();
 
     int updInvalidMsgStaById(long id);
+
+    int updInvalidMsgStaByIds(List<Long> ids);
 
 }

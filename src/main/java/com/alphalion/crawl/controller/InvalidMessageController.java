@@ -9,7 +9,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-import java.util.Set;
+import java.util.List;
 
 /**
  * @author SongBaoYu
@@ -26,7 +26,7 @@ public class InvalidMessageController {
     @ApiOperation(httpMethod = "POST", value = "处理invalid message接口", notes = "处理invalid message")
     @RequestMapping(value = "/processInvalidProducts", method = RequestMethod.POST)
     public Result processInvalidProducts() {
-        Set<String> invalidProducts = invalidMessageService.processInvalidProducts();
+        List<String> invalidProducts = invalidMessageService.processInvalidProducts();
         return Result.successed(invalidProducts);
     }
 

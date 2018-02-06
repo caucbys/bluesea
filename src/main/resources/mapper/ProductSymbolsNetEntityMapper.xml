@@ -8,6 +8,7 @@
         cusip,
         isin,
         symbol,
+        sedol,
         invalid_value
         )
         values
@@ -16,6 +17,7 @@
             #{item.cusip},
             #{item.isin},
             #{item.symbol},
+            #{item.sedol},
             #{item.invalid_value}
             )
         </foreach>

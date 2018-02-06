@@ -1,12 +1,9 @@
 package com.alphalion.crawl.service.impl;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.alphalion.crawl.application.config.UrlConfig;
 import com.alphalion.crawl.application.constant.InvalidMessageConstant;
 import com.alphalion.crawl.application.util.CrawlUtil;
-import com.alphalion.crawl.application.util.HttpUtil;
 import com.alphalion.crawl.application.util.SymbolUtil;
 import com.alphalion.crawl.mapper.BusinessDateEntityMapper;
 import com.alphalion.crawl.mapper.InvalidMessageEntityMapper;
@@ -18,10 +15,9 @@ import com.alphalion.crawl.service.IInvalidMessageService;
 import com.alphalion.crawl.service.IProductSymbolsService;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.Header;
-import org.apache.http.HttpHeaders;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import tk.mybatis.mapper.entity.Example;
 
 import java.io.IOException;
 import java.util.*;
@@ -63,36 +59,41 @@ public class InvalidMessageServiceImpl implements IInvalidMessageService {
     }
 
     @Override
-    public Set<String> processInvalidProducts() {
+    public List<String> processInvalidProducts() {
         InvalidMessageEntity queryCondition = new InvalidMessageEntity();
         queryCondition.setStatus("E");
         List<InvalidMessageEntity> invalidMessages = invalidMessageEntityMapper.select(queryCondition);
 
         if (null == invalidMessages || invalidMessages.isEmpty()) {
-            return new HashSet<String>(0);
+            return new ArrayList<>(0);
         }
 
-        int size = invalidMessages.size();
-        ProductSymbolsNetEntity productSymbolsNetEntity = null;
-        List<ProductSymbolsEntity> exitsProductSymbols = null;
-        Set<Long> msgIds = new HashSet<>(size);
-        Set<String> invalidValues = new HashSet<>(size / 2);
-
-
+        List<Long> invalidMsgIds = new ArrayList<>();
+        HashMap<String, InvalidMessageEntity> invalidMsgMap = new HashMap<>();
 
         for (InvalidMessageEntity invalidMessage : invalidMessages) {
-            try {
-                String invalidValue = invalidMessage.getInvalid_value();
-                if (InvalidMessageConstant.Values.ADD.equalsIgnoreCase(invalidValue) || InvalidMessageConstant.Values.CXL.equalsIgnoreCase(invalidValue) || Strings.isNullOrEmpty(invalidValue)) {
-                    updInvalidMsgStaById(invalidMessage.getId());
-                    log.info("delete invalid_message logically for id={},invalid_value={}",invalidMessage.getId(),invalidValue);
-                } else if(SymbolUtil.checkCUSIP(invalidValue)){
-                    if (invalidValues.contains(invalidValue)) {
-                        continue;
-                    } else {
-                        invalidValues.add(invalidValue);
-                    }
+            String invalidValue = invalidMessage.getInvalid_value();
+            if (InvalidMessageConstant.Values.ADD.equalsIgnoreCase(invalidValue) || InvalidMessageConstant.Values.CXL.equalsIgnoreCase(invalidValue) || Strings.isNullOrEmpty(invalidValue)) {
+                invalidMsgIds.add(invalidMessage.getId());
+            } else {
+                invalidMsgMap.put(invalidValue, invalidMessage);
+            }
+        }
 
+        if (!invalidMsgIds.isEmpty()) {
+            updInvalidMsgStaByIds(invalidMsgIds);
+            log.info("delete invalid_message logically for ids={},invalid_value={}", JSON.toJSON(invalidMsgIds));
+        }
+
+        Collection<InvalidMessageEntity> newSymbols = invalidMsgMap.values();
+        ProductSymbolsNetEntity productSymbolsNetEntity = null;
+        List<ProductSymbolsEntity> exitsProductSymbols = null;
+        List<String> successfulInvalidValues = new ArrayList<>();
+        List<String> failedInvalidValues = new ArrayList<>();
+        for (InvalidMessageEntity invalidMessage : newSymbols) {
+            String invalidValue = invalidMessage.getInvalid_value();
+            try {
+                if (SymbolUtil.checkCUSIP(invalidValue)) {
                     boolean exitsOldProduct = false;
                     //备用产品库查询ISIN产品----精准匹配
                     productSymbolsNetEntity = productSymbolsService.selectOneBySymbol(invalidValue);
@@ -114,7 +115,7 @@ public class InvalidMessageServiceImpl implements IInvalidMessageService {
                             }
                             //插入新的产品
                             productSymbolsService.insertCusipProductSymbols(invalidValue, productId);
-                            msgIds.add(invalidMessage.getId());
+                            successfulInvalidValues.add(invalidValue);
                             exitsOldProduct = true;
                         }
                     }
@@ -123,6 +124,7 @@ public class InvalidMessageServiceImpl implements IInvalidMessageService {
                     if (!exitsOldProduct) {
                         Long productId = productSymbolsService.getNextProductId();
                         if (null == productId) {
+                            failedInvalidValues.add(invalidValue);
                             continue;
                         }
                         if (null == productSymbolsNetEntity) {
@@ -132,28 +134,26 @@ public class InvalidMessageServiceImpl implements IInvalidMessageService {
                         productSymbolsNetEntity.setProduct_id(productId);
                         try {
                             productSymbolsService.addProductAndSymbols(productSymbolsNetEntity);
-                            msgIds.add(invalidMessage.getId());
+                            successfulInvalidValues.add(invalidValue);
                         } catch (Exception e) {
+                            failedInvalidValues.add(invalidValue);
                             e.printStackTrace();
                         }
 
                     }
+                } else {
+                    failedInvalidValues.add(invalidValue);
                 }
             } catch (IOException e) {
+                failedInvalidValues.add(invalidValue);
                 e.printStackTrace();
             }
         }
 
-        if(invalidValues.isEmpty()){
-            log.warn("Crawl process has finished...");
-            log.warn("There's no invalid message has been processed automatically...");
-            log.warn("The replay process need to start manually...");
-        }else{
-            log.warn("Crawl process has finished...");
-            log.warn("The replay process need to start manually...");
-            log.warn("invalidValues={}", JSON.toJSON(invalidValues) +" need to replay...");
-            log.warn("pIds={}",msgIds);
-        }
+        log.warn("Crawl process has finished...");
+        log.warn("successfulInvalidValues={}", JSON.toJSON(successfulInvalidValues) + " need to replay...");
+        log.warn("failedInvalidValues={}", JSON.toJSON(failedInvalidValues) + " need to review...");
+
 
         //do replay
 //        if (!msgIds.isEmpty()) {
@@ -181,7 +181,7 @@ public class InvalidMessageServiceImpl implements IInvalidMessageService {
 //            }
 //        }
 
-        return invalidValues;
+        return successfulInvalidValues;
     }
 
     @Override
@@ -193,6 +193,21 @@ public class InvalidMessageServiceImpl implements IInvalidMessageService {
         updInvalidMsg.setUpdate_time(new Date());
 
         int rows = invalidMessageEntityMapper.updateByPrimaryKeySelective(updInvalidMsg);
+        return rows;
+    }
+
+    @Override
+    public int updInvalidMsgStaByIds(List<Long> ids) {
+        Example example = new Example(InvalidMessageEntity.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andIn("id", ids);
+
+        InvalidMessageEntity updValue = new InvalidMessageEntity();
+        updValue.setStatus(InvalidMessageConstant.Status.INVALID_MESSAGE_DELETED);
+        updValue.setUpdate_by("system");
+        updValue.setUpdate_time(new Date());
+
+        int rows = invalidMessageEntityMapper.updateByExampleSelective(updValue, example);
         return rows;
     }
 
