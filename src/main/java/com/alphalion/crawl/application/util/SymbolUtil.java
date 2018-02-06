@@ -209,7 +209,7 @@ public class SymbolUtil {
 
     public static void main(String[] args) {
 
-        System.out.println("res = " +checkCUSIP("90214J101"));
+        System.out.println("res = " +checkCUSIP("01903Q207"));
     }
 
 

@@ -25,12 +25,12 @@ public class CrawlUtil {
     private static final String USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_2) " +
             "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.108 Safari/537.36";
     private static final int CONNECTION_TIMEOUT = 10000;
-    private static final String BASE_URL = "https://www.google.com/search?q=";
+    private static final String BASE_URL = "https://www.google.com/search?q=%s&r=%s";
 
 
     public static ProductSymbolsNetEntity crawlSymbol(String cusip) throws IOException {
         ProductSymbolsNetEntity extenedProduct = new ProductSymbolsNetEntity();
-        Document document = downloadHtml(BASE_URL + cusip + "+" + ProductConstant.SymbolTypes.ISIN);
+        Document document = downloadHtml(String.format(BASE_URL, cusip, ProductConstant.SymbolTypes.ISIN));
         Elements spans = document.select("span");
 
         for (Element span : spans) {
@@ -99,15 +99,19 @@ public class CrawlUtil {
                             symbol = str.substring("Simbol".length() + 1).trim();
                             if (StringUtils.isNotEmpty(symbol)) {
                                 if (symbol.length() >= 12) {
-                                    symbol=symbol.substring(0,4);
+                                    symbol = symbol.substring(0, 4);
                                 }
                             }
                         }
 
-                        if(SymbolUtil.checkSYMBOL(symbol)){
+                        if (SymbolUtil.checkSYMBOL(symbol)) {
                             extenedProduct.setSymbol(symbol);
                         }
                     }
+                }
+
+                if (SymbolUtil.checkISIN(extenedProduct.getIsin())) {
+                    break;
                 }
             } catch (Exception ex) {
                 log.error(ex.getMessage());

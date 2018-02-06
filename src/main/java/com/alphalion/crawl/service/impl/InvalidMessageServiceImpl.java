@@ -73,7 +73,7 @@ public class InvalidMessageServiceImpl implements IInvalidMessageService {
 
         for (InvalidMessageEntity invalidMessage : invalidMessages) {
             String invalidValue = invalidMessage.getInvalid_value();
-            if (InvalidMessageConstant.Values.ADD.equalsIgnoreCase(invalidValue) || InvalidMessageConstant.Values.CXL.equalsIgnoreCase(invalidValue) || Strings.isNullOrEmpty(invalidValue)) {
+            if (!InvalidMessageConstant.Reason.INVALID_REASON_PRODUCT_ID_NOT_EXIST.equalsIgnoreCase(invalidMessage.getReason())) {
                 invalidMsgIds.add(invalidMessage.getId());
             } else {
                 invalidMsgMap.put(invalidValue, invalidMessage);

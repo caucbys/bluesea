@@ -84,6 +84,7 @@ public class ProductSymbolsServiceImpl implements IProductSymbolsService {
         ProductSymbolsEntity productSymbolsEntity = new ProductSymbolsEntity();
         productSymbolsEntity.setId(id);
         productSymbolsEntity.setBusiness_thru_date(businessDateEntity.getBusiness_date());
+        productSymbolsEntity.setProcess_out_date(businessDateEntity.getBusiness_date());
         int rows = productSymbolsEntityMapper.updateByPrimaryKeySelective(productSymbolsEntity);
         return rows;
     }
@@ -96,7 +97,7 @@ public class ProductSymbolsServiceImpl implements IProductSymbolsService {
         productSymbolsEntity.setProduct_id(productId);
         productSymbolsEntity.setSymbol(cusip);
         productSymbolsEntity.setType_of_symbol(ProductConstant.SymbolTypes.CUSIP);
-        productSymbolsEntity.setProcess_in_date(businessDateEntity.getBusiness_date());
+            productSymbolsEntity.setProcess_in_date(businessDateEntity.getBusiness_date());
         productSymbolsEntity.setProcess_out_date(Constant.INFINITY_DATE);
         productSymbolsEntity.setBusiness_from_date(businessDateEntity.getBusiness_date());
         productSymbolsEntity.setBusiness_thru_date(Constant.INFINITY_DATE);
