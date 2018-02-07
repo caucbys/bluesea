@@ -246,4 +246,22 @@ public class TimeUtils {
     public static Timestamp getTimestamp() {
         return new Timestamp(getNow().getTime());
     }
+
+
+    public static int compareDate(Date d1, Date d2) {
+        if (null == d1 && null == d2) {
+            return 0;
+        }
+        if (null == d1) {
+            return -1;
+        }
+
+        if (null == d2) {
+            return 1;
+        }
+
+        Long res = d1.getTime() - d2.getTime();
+        return res.intValue();
+    }
+
 }

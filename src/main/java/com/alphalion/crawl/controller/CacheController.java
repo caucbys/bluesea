@@ -22,7 +22,6 @@ public class CacheController {
 
     @ApiOperation(httpMethod = "POST", value = "查询缓存数据", notes = "查询缓存数据")
     @RequestMapping(method = RequestMethod.POST, value = "/queryCacheValue/{key}")
-    @ResponseBody
     public Result queryCacheValueByKey(@PathVariable String key) {
         Object val = cacheService.queryCacheValue(key);
         return Result.successed(val);
@@ -30,7 +29,6 @@ public class CacheController {
 
     @ApiOperation(httpMethod = "POST", value = "查询缓存数据", notes = "查询缓存数据")
     @RequestMapping(method = RequestMethod.POST, value = "/resetCacheValue")
-    @ResponseBody
     public Result resetCacheValue(@RequestBody CacheDto cacheDto) {
         boolean res = cacheService.updateCacheByKey(cacheDto.getKey(), cacheDto.getValue());
         return new Result("操作成功", res);

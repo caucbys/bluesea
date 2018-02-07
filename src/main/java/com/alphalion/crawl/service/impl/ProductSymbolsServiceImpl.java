@@ -3,6 +3,7 @@ package com.alphalion.crawl.service.impl;
 import com.alibaba.fastjson.JSON;
 import com.alphalion.crawl.application.constant.Constant;
 import com.alphalion.crawl.application.constant.ProductConstant;
+import com.alphalion.crawl.application.constant.SymbolsConstant;
 import com.alphalion.crawl.application.util.TimeUtils;
 import com.alphalion.crawl.mapper.ProductEntityMapper;
 import com.alphalion.crawl.mapper.ProductSettlementDetailEntityMapper;
@@ -85,6 +86,41 @@ public class ProductSymbolsServiceImpl implements IProductSymbolsService {
     }
 
     @Override
+    public ProductSymbolsEntity queryMaxCusipSymbolSByISIN(String isin) {
+        if (Strings.isNullOrEmpty(isin)) {
+            return null;
+        }
+        Example example = new Example(ProductSymbolsEntity.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andEqualTo("type_of_symbol", ProductConstant.SymbolTypes.ISIN);
+        criteria.andLike("symbol", "%" + isin + "%");
+        List<ProductSymbolsEntity> isinSymbolsEntities = productSymbolsEntityMapper.selectByExample(example);
+
+        if (null != isinSymbolsEntities && !isinSymbolsEntities.isEmpty()) {
+            long productId = isinSymbolsEntities.get(0).getProduct_id();
+            example.clear();
+            criteria.andEqualTo("type_of_symbol", ProductConstant.SymbolTypes.CUSIP);
+            criteria.andEqualTo("product_id", productId);
+
+            List<ProductSymbolsEntity> cusipSymbolsEntities = productSymbolsEntityMapper.selectByExample(example);
+            if (null != cusipSymbolsEntities && !cusipSymbolsEntities.isEmpty()) {
+                ProductSymbolsEntity cusipRes = new ProductSymbolsEntity();
+                for (ProductSymbolsEntity cusipSymbolsEntity : cusipSymbolsEntities) {
+                    if (TimeUtils.compareDate(cusipSymbolsEntity.getBusiness_thru_date(), cusipRes.getBusiness_thru_date()) >= 0) {
+                        cusipRes = cusipSymbolsEntity;
+                    }
+                }
+                return cusipRes;
+            }
+
+            return isinSymbolsEntities.get(0);
+        }
+
+        return null;
+    }
+
+
+    @Override
     public int updateProductSymBusiThruById(long id) {
         java.util.Date businessDate = cacheService.getBusinessDate();
 
@@ -147,7 +183,7 @@ public class ProductSymbolsServiceImpl implements IProductSymbolsService {
         product.setAsset_type(ProductConstant.Asset.EQUITY);
         product.setSecurity_type(ProductConstant.Security.COMMON_STOCK);
         product.setIssue_category(ProductConstant.IssueCategories.US_CORP);
-        product.setSic_code("none");
+        product.setSic_code("6029");
         product.setSource("Quantex");
         product.setBusiness_from_date(new Date(businessDate.getTime()));
         product.setBusiness_thru_date(Constant.INFINITY_SQL_DATE);

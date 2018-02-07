@@ -3,6 +3,7 @@ package com.alphalion.crawl.service.impl;
 import com.alibaba.fastjson.JSON;
 import com.alphalion.crawl.application.config.UrlConfig;
 import com.alphalion.crawl.application.constant.InvalidMessageConstant;
+import com.alphalion.crawl.application.constant.ProductConstant;
 import com.alphalion.crawl.application.util.CrawlUtil;
 import com.alphalion.crawl.application.util.SymbolUtil;
 import com.alphalion.crawl.mapper.BusinessDateEntityMapper;
@@ -80,75 +81,102 @@ public class InvalidMessageServiceImpl implements IInvalidMessageService {
             }
         }
 
+        Collection<InvalidMessageEntity> newSymbols = invalidMsgMap.values();
+        ProductSymbolsNetEntity productSymbolsNetEntity = null;
+        InvalidMessageEntity nextMsg = null;
+
+        //备用产品库查询产品----精准匹配
+        List<ProductSymbolsNetEntity> dbSymbols = new ArrayList<>();
+        Iterator<InvalidMessageEntity> iterator = newSymbols.iterator();
+        while (iterator.hasNext()) {
+            nextMsg = iterator.next();
+            productSymbolsNetEntity = productSymbolsService.selectOneBySymbol(nextMsg.getInvalid_value());
+            boolean valid = addSymbols(dbSymbols, productSymbolsNetEntity, nextMsg.getInvalid_value());
+            if (valid) {
+                iterator.remove();
+            }
+        }
+
+        //爬取产品信息---广泛搜索
+        List<ProductSymbolsNetEntity> netSymbols = new ArrayList<>();
+        iterator = newSymbols.iterator();
+        while (iterator.hasNext()) {
+            nextMsg = iterator.next();
+            try {
+                productSymbolsNetEntity = CrawlUtil.crawlSymbol(nextMsg.getInvalid_value());
+                boolean valid = addSymbols(netSymbols, productSymbolsNetEntity, nextMsg.getInvalid_value());
+                if (valid) {
+                    iterator.remove();
+                }
+            } catch (Exception e) {
+                log.error("爬取产品出错: {}", e.getMessage());
+            }
+
+        }
+
+        //未搜索到的产品
+        List<ProductSymbolsNetEntity> unknownSymbols = new ArrayList<>();
+        iterator = newSymbols.iterator();
+        while (iterator.hasNext()) {
+            nextMsg = iterator.next();
+            unknownSymbols.add(new ProductSymbolsNetEntity(nextMsg.getInvalid_value(), "", "", ""));
+        }
+
+
+        List<ProductSymbolsNetEntity> hasFoundSymbols = new ArrayList<>();
+        hasFoundSymbols.addAll(dbSymbols);
+        hasFoundSymbols.addAll(netSymbols);
+        hasFoundSymbols.addAll(unknownSymbols);
+        log.info("dbSymbols====" + JSON.toJSON(dbSymbols));
+        log.info("netSymbols====" + JSON.toJSON(netSymbols));
+        log.info("unknownSymbols====" + JSON.toJSON(unknownSymbols));
+
+        //插入有效产品
+        List<String> successfulInvalidValues = new ArrayList<>();
+        List<String> failedInvalidValues = new ArrayList<>();
+        ProductSymbolsEntity maxCusipSymbolInfo;
+        for (ProductSymbolsNetEntity foundSymbol : hasFoundSymbols) {
+            try {
+                String isin = foundSymbol.getIsin();
+                if (Strings.isNullOrEmpty(isin)) {
+                    isin = foundSymbol.getCusip();
+                }
+
+                maxCusipSymbolInfo = productSymbolsService.queryMaxCusipSymbolSByISIN(isin);
+                //数据库中存在过期的产品
+                if (null != maxCusipSymbolInfo) {
+                    if (ProductConstant.SymbolTypes.CUSIP.equals(maxCusipSymbolInfo.getType_of_symbol())) {
+                        productSymbolsService.updateProductSymBusiThruById(maxCusipSymbolInfo.getId());
+                    } else if (ProductConstant.SymbolTypes.ISIN.equals(maxCusipSymbolInfo.getType_of_symbol())) {
+                        //插入新的产品
+                        productSymbolsService.insertCusipProductSymbols(foundSymbol.getCusip(), maxCusipSymbolInfo.getProduct_id());
+                        successfulInvalidValues.add(foundSymbol.getInvalid_value());
+                    }
+                } else {//不存在
+                    Long productId = productSymbolsService.getNextProductId();
+                    if (null == productId) {
+                        failedInvalidValues.add(foundSymbol.getInvalid_value());
+                        continue;
+                    }
+                    foundSymbol.setProduct_id(productId);
+                    productSymbolsService.addProductAndSymbols(productSymbolsNetEntity);
+                    successfulInvalidValues.add(foundSymbol.getInvalid_value());
+                }
+
+
+            } catch (Exception e) {
+                failedInvalidValues.add(foundSymbol.getInvalid_value());
+                e.printStackTrace();
+            }
+        }
+
+
+        //不规则记录
         if (!invalidMsgIds.isEmpty()) {
             updInvalidMsgStaByIds(invalidMsgIds);
             log.info("delete invalid_message logically for ids={},invalid_value={}", JSON.toJSON(invalidMsgIds));
         }
 
-        Collection<InvalidMessageEntity> newSymbols = invalidMsgMap.values();
-        ProductSymbolsNetEntity productSymbolsNetEntity = null;
-        List<ProductSymbolsEntity> exitsProductSymbols = null;
-        List<String> successfulInvalidValues = new ArrayList<>();
-        List<String> failedInvalidValues = new ArrayList<>();
-        for (InvalidMessageEntity invalidMessage : newSymbols) {
-            String invalidValue = invalidMessage.getInvalid_value();
-            try {
-                if (SymbolUtil.checkCUSIP(invalidValue)) {
-                    boolean exitsOldProduct = false;
-                    //备用产品库查询ISIN产品----精准匹配
-                    productSymbolsNetEntity = productSymbolsService.selectOneBySymbol(invalidValue);
-                    if (null == productSymbolsNetEntity || Strings.isNullOrEmpty(productSymbolsNetEntity.getIsin())) {
-                        //爬取ISIN产品信息---广泛搜索
-                        productSymbolsNetEntity = CrawlUtil.crawlSymbol(invalidValue);
-                    }
-
-                    if (null != productSymbolsNetEntity && !Strings.isNullOrEmpty(productSymbolsNetEntity.getIsin())) {
-                        exitsProductSymbols = productSymbolsService.listCusipProductsByIsin(productSymbolsNetEntity.getIsin());
-
-                        //数据库中已存在旧的产品
-                        if (!exitsProductSymbols.isEmpty()) {
-                            //更新已有产品有效日期
-                            long productId = 0L;
-                            for (ProductSymbolsEntity exitsProductSymbol : exitsProductSymbols) {
-                                productSymbolsService.updateProductSymBusiThruById(exitsProductSymbol.getId());
-                                productId = exitsProductSymbol.getProduct_id();
-                            }
-                            //插入新的产品
-                            productSymbolsService.insertCusipProductSymbols(invalidValue, productId);
-                            successfulInvalidValues.add(invalidValue);
-                            exitsOldProduct = true;
-                        }
-                    }
-
-                    //未爬取到ISIN产品;或爬取到但是数据库中不存在旧产品记录
-                    if (!exitsOldProduct) {
-                        Long productId = productSymbolsService.getNextProductId();
-                        if (null == productId) {
-                            failedInvalidValues.add(invalidValue);
-                            continue;
-                        }
-                        if (null == productSymbolsNetEntity) {
-                            productSymbolsNetEntity = new ProductSymbolsNetEntity();
-                            productSymbolsNetEntity.setCusip(invalidValue);
-                        }
-                        productSymbolsNetEntity.setProduct_id(productId);
-                        try {
-                            productSymbolsService.addProductAndSymbols(productSymbolsNetEntity);
-                            successfulInvalidValues.add(invalidValue);
-                        } catch (Exception e) {
-                            failedInvalidValues.add(invalidValue);
-                            e.printStackTrace();
-                        }
-
-                    }
-                } else {
-                    failedInvalidValues.add(invalidValue);
-                }
-            } catch (IOException e) {
-                failedInvalidValues.add(invalidValue);
-                e.printStackTrace();
-            }
-        }
 
         log.warn("Crawl process has finished...");
         log.warn("successfulInvalidValues={}", JSON.toJSON(successfulInvalidValues) + " need to replay...");
@@ -211,5 +239,23 @@ public class InvalidMessageServiceImpl implements IInvalidMessageService {
         return rows;
     }
 
+
+    /**
+     * either ISIN or CUSIP is valid
+     *
+     * @param list
+     * @param symbolInfo
+     */
+    private boolean addSymbols(List list, ProductSymbolsNetEntity symbolInfo, String invalidValue) {
+        if (null != symbolInfo) {
+            boolean valid = SymbolUtil.checkCUSIP(symbolInfo.getCusip()) || SymbolUtil.checkISIN(symbolInfo.getIsin());
+            if (valid) {
+                symbolInfo.setInvalid_value(invalidValue);
+                list.add(symbolInfo);
+                return true;
+            }
+        }
+        return false;
+    }
 
 }

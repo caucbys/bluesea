@@ -39,6 +39,7 @@ public class ProductSymbolsNetEntity {
         this.isin = isin;
         this.symbol = symbol;
         this.sedol = sedol;
+        this.invalid_value=cusip;
     }
 
     public String getCusip() {

@@ -222,7 +222,7 @@ public class SymbolUtil {
 
     public static void main(String[] args) {
 
-        System.out.println("res = " + checkISIN("IL0010829658"));
+        System.out.println("res = " + checkCUSIP("120831169"));
     }
 
 

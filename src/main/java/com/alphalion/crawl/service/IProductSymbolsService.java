@@ -16,6 +16,9 @@ public interface IProductSymbolsService {
 
     List<ProductSymbolsEntity> listCusipProductsByIsin(String isin);
 
+    ProductSymbolsEntity queryMaxCusipSymbolSByISIN(String isin) throws Exception;
+
+
     int updateProductSymBusiThruById(long id);
 
     int insertCusipProductSymbols(String cusip, long productId);
