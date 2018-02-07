@@ -97,14 +97,16 @@ public class ProductSymbolsServiceImpl implements IProductSymbolsService {
         productSymbolsEntity.setProduct_id(productId);
         productSymbolsEntity.setSymbol(cusip);
         productSymbolsEntity.setType_of_symbol(ProductConstant.SymbolTypes.CUSIP);
-            productSymbolsEntity.setProcess_in_date(businessDateEntity.getBusiness_date());
+        productSymbolsEntity.setProcess_in_date(businessDateEntity.getBusiness_date());
         productSymbolsEntity.setProcess_out_date(Constant.INFINITY_DATE);
         productSymbolsEntity.setBusiness_from_date(businessDateEntity.getBusiness_date());
         productSymbolsEntity.setBusiness_thru_date(Constant.INFINITY_DATE);
         productSymbolsEntity.setCreate_time(TimeUtils.getNow());
         productSymbolsEntity.setUpdate_reason("Quantex");
         productSymbolsEntity.setUpdate_by("system");
-        return 0;
+
+        int r = productSymbolsEntityMapper.insertSelective(productSymbolsEntity);
+        return r;
     }
 
     @Override
