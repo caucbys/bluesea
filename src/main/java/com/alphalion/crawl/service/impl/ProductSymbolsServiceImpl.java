@@ -4,8 +4,15 @@ import com.alibaba.fastjson.JSON;
 import com.alphalion.crawl.application.constant.Constant;
 import com.alphalion.crawl.application.constant.ProductConstant;
 import com.alphalion.crawl.application.util.TimeUtils;
-import com.alphalion.crawl.mapper.*;
-import com.alphalion.crawl.mapper.entity.*;
+import com.alphalion.crawl.mapper.ProductEntityMapper;
+import com.alphalion.crawl.mapper.ProductSettlementDetailEntityMapper;
+import com.alphalion.crawl.mapper.ProductSymbolsEntityMapper;
+import com.alphalion.crawl.mapper.ProductSymbolsNetEntityMapper;
+import com.alphalion.crawl.mapper.entity.ProductEntity;
+import com.alphalion.crawl.mapper.entity.ProductSettlementDetailEntity;
+import com.alphalion.crawl.mapper.entity.ProductSymbolsEntity;
+import com.alphalion.crawl.mapper.entity.ProductSymbolsNetEntity;
+import com.alphalion.crawl.service.ICacheService;
 import com.alphalion.crawl.service.IProductSymbolsService;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
@@ -31,11 +38,11 @@ public class ProductSymbolsServiceImpl implements IProductSymbolsService {
     @Autowired
     private ProductSymbolsEntityMapper productSymbolsEntityMapper;
     @Autowired
-    private BusinessDateEntityMapper businessDateEntityMapper;
-    @Autowired
     private ProductEntityMapper productEntityMapper;
     @Autowired
     private ProductSettlementDetailEntityMapper productSettlementDetailEntityMapper;
+    @Autowired
+    private ICacheService cacheService;
 
     @Override
     public ProductSymbolsNetEntity selectOneBySymbol(String symbol) {
@@ -79,27 +86,27 @@ public class ProductSymbolsServiceImpl implements IProductSymbolsService {
 
     @Override
     public int updateProductSymBusiThruById(long id) {
-        BusinessDateEntity businessDateEntity = businessDateEntityMapper.selectOne(null);
+        java.util.Date businessDate = cacheService.getBusinessDate();
 
         ProductSymbolsEntity productSymbolsEntity = new ProductSymbolsEntity();
         productSymbolsEntity.setId(id);
-        productSymbolsEntity.setBusiness_thru_date(businessDateEntity.getBusiness_date());
-        productSymbolsEntity.setProcess_out_date(businessDateEntity.getBusiness_date());
+        productSymbolsEntity.setBusiness_thru_date(businessDate);
+        productSymbolsEntity.setProcess_out_date(businessDate);
         int rows = productSymbolsEntityMapper.updateByPrimaryKeySelective(productSymbolsEntity);
         return rows;
     }
 
     @Override
     public int insertCusipProductSymbols(String cusip, long productId) {
-        BusinessDateEntity businessDateEntity = businessDateEntityMapper.selectOne(null);
+        java.util.Date businessDate = cacheService.getBusinessDate();
 
         ProductSymbolsEntity productSymbolsEntity = new ProductSymbolsEntity();
         productSymbolsEntity.setProduct_id(productId);
         productSymbolsEntity.setSymbol(cusip);
         productSymbolsEntity.setType_of_symbol(ProductConstant.SymbolTypes.CUSIP);
-        productSymbolsEntity.setProcess_in_date(businessDateEntity.getBusiness_date());
+        productSymbolsEntity.setProcess_in_date(businessDate);
         productSymbolsEntity.setProcess_out_date(Constant.INFINITY_DATE);
-        productSymbolsEntity.setBusiness_from_date(businessDateEntity.getBusiness_date());
+        productSymbolsEntity.setBusiness_from_date(businessDate);
         productSymbolsEntity.setBusiness_thru_date(Constant.INFINITY_DATE);
         productSymbolsEntity.setCreate_time(TimeUtils.getNow());
         productSymbolsEntity.setUpdate_reason("Quantex");
@@ -130,7 +137,7 @@ public class ProductSymbolsServiceImpl implements IProductSymbolsService {
 
     @Override
     public int addProduct(long productId) {
-        BusinessDateEntity businessDateEntity = businessDateEntityMapper.selectOne(null);
+        java.util.Date businessDate = cacheService.getBusinessDate();
 
         ProductEntity product = new ProductEntity();
         product.setProduct_id(productId);
@@ -142,9 +149,9 @@ public class ProductSymbolsServiceImpl implements IProductSymbolsService {
         product.setIssue_category(ProductConstant.IssueCategories.US_CORP);
         product.setSic_code("none");
         product.setSource("Quantex");
-        product.setBusiness_from_date(new Date(businessDateEntity.getBusiness_date().getTime()));
+        product.setBusiness_from_date(new Date(businessDate.getTime()));
         product.setBusiness_thru_date(Constant.INFINITY_SQL_DATE);
-        product.setProcess_in_date(new Date(businessDateEntity.getBusiness_date().getTime()));
+        product.setProcess_in_date(new Date(businessDate.getTime()));
         product.setProcess_out_date(Constant.INFINITY_SQL_DATE);
         product.setUpdate_by("system");
 
@@ -176,8 +183,8 @@ public class ProductSymbolsServiceImpl implements IProductSymbolsService {
         settlementDetailEntity.setNsc_indicator("none");
         settlementDetailEntity.setCreate_time(TimeUtils.getTimestamp());
 
-        BusinessDateEntity businessDateEntity = businessDateEntityMapper.selectOne(null);
-        settlementDetailEntity.setProcess_in_date(businessDateEntity.getBusiness_date());
+        java.util.Date businessDate = cacheService.getBusinessDate();
+        settlementDetailEntity.setProcess_in_date(businessDate);
         settlementDetailEntity.setProcess_out_date(Constant.INFINITY_DATE);
 
         int rows = productSettlementDetailEntityMapper.insertSelective(settlementDetailEntity);
@@ -187,12 +194,12 @@ public class ProductSymbolsServiceImpl implements IProductSymbolsService {
     @Transactional(rollbackFor = Exception.class)
     @Override
     public int addProductSymbols(ProductSymbolsNetEntity netProduct) {
-        BusinessDateEntity businessDateEntity = businessDateEntityMapper.selectOne(null);
+        java.util.Date businessDate = cacheService.getBusinessDate();
         ProductSymbolsEntity productSymbolsEntity = new ProductSymbolsEntity();
         productSymbolsEntity.setProduct_id(netProduct.getProduct_id());
-        productSymbolsEntity.setProcess_in_date(businessDateEntity.getBusiness_date());
+        productSymbolsEntity.setProcess_in_date(businessDate);
         productSymbolsEntity.setProcess_out_date(Constant.INFINITY_DATE);
-        productSymbolsEntity.setBusiness_from_date(businessDateEntity.getBusiness_date());
+        productSymbolsEntity.setBusiness_from_date(businessDate);
         productSymbolsEntity.setBusiness_thru_date(Constant.INFINITY_DATE);
         productSymbolsEntity.setCreate_time(TimeUtils.getTimestamp());
         productSymbolsEntity.setUpdate_by("system");
@@ -265,6 +272,7 @@ public class ProductSymbolsServiceImpl implements IProductSymbolsService {
 
         r = addProductSymbols(productSymbolsNetEntity);
         if (r < 1) {
+            log.error("productSymbolsInfo====={}", JSON.toJSON(productSymbolsNetEntity));
             throw new Exception("insert productSymbols error: insert rows=0");
         }
         return true;
