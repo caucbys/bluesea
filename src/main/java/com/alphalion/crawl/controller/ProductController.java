@@ -3,6 +3,7 @@ package com.alphalion.crawl.controller;
 import com.alphalion.crawl.controller.dto.Result;
 import com.alphalion.crawl.mapper.ProductEntityMapper;
 import com.alphalion.crawl.mapper.ProductSymbolsEntityMapper;
+import com.alphalion.crawl.mapper.ProductSymbolsNetEntityMapper;
 import com.alphalion.crawl.mapper.entity.ProductEntity;
 import com.alphalion.crawl.mapper.entity.ProductSymbolsEntity;
 import com.alphalion.crawl.mapper.entity.ProductSymbolsNetEntity;
@@ -31,6 +32,8 @@ public class ProductController {
     private IProductSymbolsService productSymbolsService;
     @Autowired
     private ProductSymbolsEntityMapper productSymbolsEntityMapper;
+    @Autowired
+    private ProductSymbolsNetEntityMapper productSymbolsNetEntityMapper;
     @Autowired
     private ProductEntityMapper productEntityMapper;
 
@@ -87,6 +90,12 @@ public class ProductController {
         return Result.successed("录入成功记录数为:" + r);
     }
 
+    @ApiOperation(httpMethod = "POST", value = "录入备用symbols信息", notes = "备用")
+    @RequestMapping(method = RequestMethod.POST, value = "/insertBakSymbols")
+    public Result insertBakSymbols(@RequestBody ProductSymbolsNetEntity symbol) {
+        int r = productSymbolsNetEntityMapper.insertSelective(symbol);
+        return Result.successed("录入成功记录数为:" + r);
+    }
 
     @ApiOperation(httpMethod = "POST", value = "录入产品和symbols信息", notes = "会生成product和symbols两种记录")
     @RequestMapping(method = RequestMethod.POST, value = "/addProductAndSymbols")

@@ -114,12 +114,16 @@ public class InvalidMessageServiceImpl implements IInvalidMessageService {
 
         }
 
+        List<String> successfulInvalidValues = new ArrayList<>();
+        List<String> failedInvalidValues = new ArrayList<>();
+
         //未搜索到的产品
         List<ProductSymbolsNetEntity> unknownSymbols = new ArrayList<>();
         iterator = newSymbols.iterator();
         while (iterator.hasNext()) {
             nextMsg = iterator.next();
             unknownSymbols.add(new ProductSymbolsNetEntity(nextMsg.getInvalid_value(), "", "", ""));
+            failedInvalidValues.add(nextMsg.getInvalid_value());
         }
 
 
@@ -132,8 +136,6 @@ public class InvalidMessageServiceImpl implements IInvalidMessageService {
         log.info("unknownSymbols====" + JSON.toJSON(unknownSymbols));
 
         //插入有效产品
-        List<String> successfulInvalidValues = new ArrayList<>();
-        List<String> failedInvalidValues = new ArrayList<>();
         ProductSymbolsEntity maxCusipSymbolInfo;
         for (ProductSymbolsNetEntity foundSymbol : hasFoundSymbols) {
             try {
@@ -147,11 +149,10 @@ public class InvalidMessageServiceImpl implements IInvalidMessageService {
                 if (null != maxCusipSymbolInfo) {
                     if (ProductConstant.SymbolTypes.CUSIP.equals(maxCusipSymbolInfo.getType_of_symbol())) {
                         productSymbolsService.updateProductSymBusiThruById(maxCusipSymbolInfo.getId());
-                    } else if (ProductConstant.SymbolTypes.ISIN.equals(maxCusipSymbolInfo.getType_of_symbol())) {
-                        //插入新的产品
-                        productSymbolsService.insertCusipProductSymbols(foundSymbol.getCusip(), maxCusipSymbolInfo.getProduct_id());
-                        successfulInvalidValues.add(foundSymbol.getInvalid_value());
                     }
+                    //插入新的产品
+                    productSymbolsService.insertCusipProductSymbols(foundSymbol.getCusip(), maxCusipSymbolInfo.getProduct_id());
+                    successfulInvalidValues.add(foundSymbol.getInvalid_value());
                 } else {//不存在
                     Long productId = productSymbolsService.getNextProductId();
                     if (null == productId) {
