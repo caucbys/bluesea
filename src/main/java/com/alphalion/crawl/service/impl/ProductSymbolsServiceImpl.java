@@ -190,7 +190,6 @@ public class ProductSymbolsServiceImpl implements IProductSymbolsService {
         product.setProcess_in_date(new Date(businessDate.getTime()));
         product.setProcess_out_date(Constant.INFINITY_SQL_DATE);
         product.setUpdate_by("system");
-
         product.setCurrency_code(Constant.CURRENCY_US);
         product.setSecurity_subtype(ProductConstant.SecuritySub.ETF);
         product.setLong_description("none");

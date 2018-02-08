@@ -1,5 +1,7 @@
 package com.alphalion.crawl.application.util;
 
+import com.alphalion.crawl.application.constant.InvalidMessageConstant;
+import com.alphalion.crawl.mapper.entity.InvalidMessageEntity;
 import com.google.common.base.Strings;
 
 import java.util.ArrayList;
@@ -226,11 +228,15 @@ public class SymbolUtil {
     }
 
 
-    public static boolean checkInvalidValue(String invalidValue) {
-        if (Strings.isNullOrEmpty(invalidValue)) {
+    public static boolean checkInvalidValue(InvalidMessageEntity invalidMessage) {
+        if (!InvalidMessageConstant.Reason.INVALID_REASON_PRODUCT_ID_NOT_EXIST.equalsIgnoreCase(invalidMessage.getReason())) {
             return false;
         }
 
+        String invalidValue = invalidMessage.getInvalid_value();
+        if (Strings.isNullOrEmpty(invalidValue) || 9 != invalidValue.length()) {
+            return false;
+        }
         return true;
     }
 }

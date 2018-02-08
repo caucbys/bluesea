@@ -74,7 +74,7 @@ public class InvalidMessageServiceImpl implements IInvalidMessageService {
 
         for (InvalidMessageEntity invalidMessage : invalidMessages) {
             String invalidValue = invalidMessage.getInvalid_value();
-            if (!InvalidMessageConstant.Reason.INVALID_REASON_PRODUCT_ID_NOT_EXIST.equalsIgnoreCase(invalidMessage.getReason())) {
+            if (SymbolUtil.checkInvalidValue(invalidMessage)) {
                 invalidMsgIds.add(invalidMessage.getId());
             } else {
                 invalidMsgMap.put(invalidValue, invalidMessage);
@@ -126,7 +126,7 @@ public class InvalidMessageServiceImpl implements IInvalidMessageService {
         List<ProductSymbolsNetEntity> hasFoundSymbols = new ArrayList<>();
         hasFoundSymbols.addAll(dbSymbols);
         hasFoundSymbols.addAll(netSymbols);
-        hasFoundSymbols.addAll(unknownSymbols);
+//        hasFoundSymbols.addAll(unknownSymbols);
         log.info("dbSymbols====" + JSON.toJSON(dbSymbols));
         log.info("netSymbols====" + JSON.toJSON(netSymbols));
         log.info("unknownSymbols====" + JSON.toJSON(unknownSymbols));
