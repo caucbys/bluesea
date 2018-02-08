@@ -159,7 +159,7 @@ public class InvalidMessageServiceImpl implements IInvalidMessageService {
                         continue;
                     }
                     foundSymbol.setProduct_id(productId);
-                    productSymbolsService.addProductAndSymbols(productSymbolsNetEntity);
+                    productSymbolsService.addProductAndSymbols(foundSymbol);
                     successfulInvalidValues.add(foundSymbol.getInvalid_value());
                 }
 

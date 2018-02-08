@@ -26,12 +26,12 @@ public class CrawlUtil {
     private static final String USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_2) " +
             "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.108 Safari/537.36";
     private static final int CONNECTION_TIMEOUT = 10000;
-    private static final String BASE_URL = "https://www.google.com/search?q=%s&r=%s";
+    private static final String BASE_URL = "https://www.google.com/search?q=";
 
 
     public static ProductSymbolsNetEntity crawlSymbol(String cusip) throws IOException {
         ProductSymbolsNetEntity extenedProduct = new ProductSymbolsNetEntity();
-        Document document = downloadHtml(String.format(BASE_URL, cusip, ProductConstant.SymbolTypes.ISIN));
+        Document document = downloadHtml(BASE_URL + cusip + "&r=" + ProductConstant.SymbolTypes.ISIN);
         Elements spans = document.select("span");
 
         for (Element span : spans) {
@@ -92,13 +92,12 @@ public class CrawlUtil {
                     if (SymbolUtil.checkCUSIP(CUSIP)) {
                         extenedProduct.setCusip(CUSIP);
                     }
-                } else if(str.indexOf(ProductConstant.SymbolTypes.WKN)>-1 && Strings.isNullOrEmpty(extenedProduct.getCusip())){
+                } else if (str.indexOf(ProductConstant.SymbolTypes.WKN) > -1 && Strings.isNullOrEmpty(extenedProduct.getCusip())) {
                     String WKN = str.substring(ProductConstant.SymbolTypes.WKN.length() + 1).trim();
                     if (SymbolUtil.checkWKN(WKN)) {
                         extenedProduct.setCusip(WKN);
                     }
-                }
-                else if (StringUtils.isEmpty(extenedProduct.getSymbol())) {
+                } else if (StringUtils.isEmpty(extenedProduct.getSymbol())) {
                     int index = str.toUpperCase().indexOf(ProductConstant.SymbolTypes.SYMBOL);
                     if (index > -1) {
                         String symbol = str.toUpperCase().substring(index + ProductConstant.SymbolTypes.SYMBOL.length() + 1).trim();
