@@ -139,12 +139,7 @@ public class InvalidMessageServiceImpl implements IInvalidMessageService {
         ProductSymbolsEntity maxCusipSymbolInfo;
         for (ProductSymbolsNetEntity foundSymbol : hasFoundSymbols) {
             try {
-                String isin = foundSymbol.getIsin();
-                if (Strings.isNullOrEmpty(isin)) {
-                    isin = foundSymbol.getCusip();
-                }
-
-                maxCusipSymbolInfo = productSymbolsService.queryMaxCusipSymbolSByISIN(isin);
+                maxCusipSymbolInfo = productSymbolsService.queryMaxCusipSymbolSByISIN(foundSymbol);
                 //数据库中存在过期的产品
                 if (null != maxCusipSymbolInfo) {
                     if (ProductConstant.SymbolTypes.CUSIP.equals(maxCusipSymbolInfo.getType_of_symbol())) {

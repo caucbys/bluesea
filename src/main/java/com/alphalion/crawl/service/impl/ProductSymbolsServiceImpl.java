@@ -3,7 +3,6 @@ package com.alphalion.crawl.service.impl;
 import com.alibaba.fastjson.JSON;
 import com.alphalion.crawl.application.constant.Constant;
 import com.alphalion.crawl.application.constant.ProductConstant;
-import com.alphalion.crawl.application.constant.SymbolsConstant;
 import com.alphalion.crawl.application.util.TimeUtils;
 import com.alphalion.crawl.mapper.ProductEntityMapper;
 import com.alphalion.crawl.mapper.ProductSettlementDetailEntityMapper;
@@ -86,15 +85,29 @@ public class ProductSymbolsServiceImpl implements IProductSymbolsService {
     }
 
     @Override
-    public ProductSymbolsEntity queryMaxCusipSymbolSByISIN(String isin) {
+    public ProductSymbolsEntity queryMaxCusipSymbolSByISIN(ProductSymbolsNetEntity symbol) {
+        String isin = symbol.getIsin();
+        if (Strings.isNullOrEmpty(isin)) {
+            isin = symbol.getCusip();
+        }
         if (Strings.isNullOrEmpty(isin)) {
             return null;
         }
+
         Example example = new Example(ProductSymbolsEntity.class);
         Example.Criteria criteria = example.createCriteria();
         criteria.andEqualTo("type_of_symbol", ProductConstant.SymbolTypes.ISIN);
         criteria.andLike("symbol", "%" + isin + "%");
         List<ProductSymbolsEntity> isinSymbolsEntities = productSymbolsEntityMapper.selectByExample(example);
+
+        boolean validSymbol = !Strings.isNullOrEmpty(symbol.getSymbol()) && (null == isinSymbolsEntities || isinSymbolsEntities.isEmpty());
+        if (validSymbol) {
+            example.clear();
+            criteria.andEqualTo("type_of_symbol", ProductConstant.SymbolTypes.SYMBOL);
+            criteria.andEqualTo("symbol", symbol.getSymbol());
+            isinSymbolsEntities = productSymbolsEntityMapper.selectByExample(example);
+        }
+
 
         if (null != isinSymbolsEntities && !isinSymbolsEntities.isEmpty()) {
             long productId = isinSymbolsEntities.get(0).getProduct_id();
