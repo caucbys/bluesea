@@ -76,6 +76,7 @@ public class ProductSymbolsServiceImpl implements IProductSymbolsService {
         if (null != productSymbolsEntities && !productSymbolsEntities.isEmpty()) {
             long productId = productSymbolsEntities.get(0).getProduct_id();
             example.clear();
+            criteria = example.createCriteria();
             criteria.andEqualTo("type_of_symbol", ProductConstant.SymbolTypes.CUSIP);
             criteria.andEqualTo("product_id", productId);
 
@@ -103,6 +104,7 @@ public class ProductSymbolsServiceImpl implements IProductSymbolsService {
         boolean validSymbol = !Strings.isNullOrEmpty(symbol.getSymbol()) && (null == isinSymbolsEntities || isinSymbolsEntities.isEmpty());
         if (validSymbol) {
             example.clear();
+            criteria = example.createCriteria();
             criteria.andEqualTo("type_of_symbol", ProductConstant.SymbolTypes.SYMBOL);
             criteria.andEqualTo("symbol", symbol.getSymbol());
             isinSymbolsEntities = productSymbolsEntityMapper.selectByExample(example);
@@ -112,6 +114,7 @@ public class ProductSymbolsServiceImpl implements IProductSymbolsService {
         if (null != isinSymbolsEntities && !isinSymbolsEntities.isEmpty()) {
             long productId = isinSymbolsEntities.get(0).getProduct_id();
             example.clear();
+            criteria = example.createCriteria();
             criteria.andEqualTo("type_of_symbol", ProductConstant.SymbolTypes.CUSIP);
             criteria.andEqualTo("product_id", productId);
 

@@ -170,7 +170,7 @@ public class InvalidMessageServiceImpl implements IInvalidMessageService {
         //不规则记录
         if (!invalidMsgIds.isEmpty()) {
             updInvalidMsgStaByIds(invalidMsgIds);
-            log.info("delete invalid_message logically for ids={},invalid_value={}", JSON.toJSON(invalidMsgIds));
+            log.info("delete invalid_message logically for ids={}", JSON.toJSON(invalidMsgIds));
         }
 
 
