@@ -75,9 +75,9 @@ public class InvalidMessageServiceImpl implements IInvalidMessageService {
         for (InvalidMessageEntity invalidMessage : invalidMessages) {
             String invalidValue = invalidMessage.getInvalid_value();
             if (SymbolUtil.checkInvalidValue(invalidMessage)) {
-                invalidMsgIds.add(invalidMessage.getId());
-            } else {
                 invalidMsgMap.put(invalidValue, invalidMessage);
+            } else {
+                invalidMsgIds.add(invalidMessage.getId());
             }
         }
 
