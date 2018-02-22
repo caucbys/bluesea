@@ -6,6 +6,7 @@ import com.alphalion.crawl.application.constant.InvalidMessageConstant;
 import com.alphalion.crawl.application.constant.ProductConstant;
 import com.alphalion.crawl.application.util.CrawlUtil;
 import com.alphalion.crawl.application.util.SymbolUtil;
+import com.alphalion.crawl.controller.dto.InvalidMsgProcessDto;
 import com.alphalion.crawl.mapper.BusinessDateEntityMapper;
 import com.alphalion.crawl.mapper.InvalidMessageEntityMapper;
 import com.alphalion.crawl.mapper.ProductSymbolsNetEntityMapper;
@@ -14,7 +15,6 @@ import com.alphalion.crawl.mapper.entity.ProductSymbolsEntity;
 import com.alphalion.crawl.mapper.entity.ProductSymbolsNetEntity;
 import com.alphalion.crawl.service.IInvalidMessageService;
 import com.alphalion.crawl.service.IProductSymbolsService;
-import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -60,13 +60,13 @@ public class InvalidMessageServiceImpl implements IInvalidMessageService {
     }
 
     @Override
-    public List<String> processInvalidProducts() {
+    public InvalidMsgProcessDto processInvalidProducts() {
         InvalidMessageEntity queryCondition = new InvalidMessageEntity();
         queryCondition.setStatus("E");
         List<InvalidMessageEntity> invalidMessages = invalidMessageEntityMapper.select(queryCondition);
 
         if (null == invalidMessages || invalidMessages.isEmpty()) {
-            return new ArrayList<>(0);
+            return null;
         }
 
         List<Long> invalidMsgIds = new ArrayList<>();
@@ -205,7 +205,10 @@ public class InvalidMessageServiceImpl implements IInvalidMessageService {
 //            }
 //        }
 
-        return successfulInvalidValues;
+        InvalidMsgProcessDto invalidMsgProcessDto = new InvalidMsgProcessDto();
+        invalidMsgProcessDto.setSucc(successfulInvalidValues);
+        invalidMsgProcessDto.setFail(failedInvalidValues);
+        return invalidMsgProcessDto;
     }
 
     @Override

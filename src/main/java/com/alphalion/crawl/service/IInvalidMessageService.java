@@ -1,5 +1,7 @@
 package com.alphalion.crawl.service;
 
+import com.alphalion.crawl.controller.dto.InvalidMsgProcessDto;
+
 import java.util.List;
 
 /**
@@ -10,7 +12,7 @@ public interface IInvalidMessageService {
 
     void seekProduct(List<String> invalidValues);
 
-    List<String> processInvalidProducts();
+    InvalidMsgProcessDto processInvalidProducts();
 
     int updInvalidMsgStaById(long id);
 
