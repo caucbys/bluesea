@@ -15,6 +15,7 @@ import com.alphalion.crawl.mapper.entity.ProductSymbolsEntity;
 import com.alphalion.crawl.mapper.entity.ProductSymbolsNetEntity;
 import com.alphalion.crawl.service.IInvalidMessageService;
 import com.alphalion.crawl.service.IProductSymbolsService;
+import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -247,6 +248,10 @@ public class InvalidMessageServiceImpl implements IInvalidMessageService {
      */
     private boolean addSymbols(List list, ProductSymbolsNetEntity symbolInfo, String invalidValue) {
         if (null != symbolInfo) {
+            if (!Strings.isNullOrEmpty(symbolInfo.getCusip()) && !symbolInfo.getCusip().equals(invalidValue)) {
+                return false;
+            }
+
             boolean valid = SymbolUtil.checkCUSIP(symbolInfo.getCusip()) || SymbolUtil.checkISIN(symbolInfo.getIsin());
             if (valid) {
                 symbolInfo.setInvalid_value(invalidValue);

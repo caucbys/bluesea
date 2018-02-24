@@ -224,7 +224,7 @@ public class SymbolUtil {
 
     public static void main(String[] args) {
 
-        System.out.println("res = " + checkCUSIP("120831169"));
+        System.out.println("res = " + checkISIN("US74913G8731"));
     }
 
 
