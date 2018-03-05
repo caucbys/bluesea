@@ -169,10 +169,10 @@ public class InvalidMessageServiceImpl implements IInvalidMessageService {
 
 
         //不规则记录
-        if (!invalidMsgIds.isEmpty()) {
-            updInvalidMsgStaByIds(invalidMsgIds);
-            log.info("delete invalid_message logically for ids={}", JSON.toJSON(invalidMsgIds));
-        }
+//        if (!invalidMsgIds.isEmpty()) {
+//            updInvalidMsgStaByIds(invalidMsgIds);
+//            log.info("delete invalid_message logically for ids={}", JSON.toJSON(invalidMsgIds));
+//        }
 
 
         log.warn("Crawl process has finished...");
