@@ -1,6 +1,7 @@
 package com.alphalion.crawl.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
+import com.alphalion.crawl.application.util.TimeUtils;
 import com.alphalion.crawl.mapper.BusinessDateEntityMapper;
 import com.alphalion.crawl.mapper.entity.BusinessDateEntity;
 import com.alphalion.crawl.service.ICacheService;
@@ -33,13 +34,13 @@ public class CacheServiceImpl implements ICacheService {
 
     @Override
     public Date getBusinessDate() {
-        Date date = (Date) cache.get(BUSINESS_DATE_CACHE_KEY);
-        if (null == date) {
+        Object val = cache.get(BUSINESS_DATE_CACHE_KEY);
+        if (null == val) {
             BusinessDateEntity businessDateEntity = businessDateEntityMapper.selectOne(null);
             cache.put(BUSINESS_DATE_CACHE_KEY, businessDateEntity.getBusiness_date());
             return businessDateEntity.getBusiness_date();
         }
-        return date;
+        return TimeUtils.parseDateForSecond(val.toString());
     }
 
     @Override

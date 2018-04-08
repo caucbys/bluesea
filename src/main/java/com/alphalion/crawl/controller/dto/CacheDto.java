@@ -12,6 +12,6 @@ import lombok.Data;
 public class CacheDto {
     @ApiModelProperty(example = ICacheService.BUSINESS_DATE_CACHE_KEY)
     private String key;
-    @ApiModelProperty(example = "2018-01-17 00:00")
+    @ApiModelProperty(example = "2018-01-17 00:00:00")
     private Object value;
 }

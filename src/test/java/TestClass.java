@@ -10,6 +10,7 @@ public class TestClass {
         public Holder() {
             System.out.println("Holder construct start...");
         }
+
     }
 
     private TestClass() {
@@ -27,7 +28,9 @@ public class TestClass {
     }
 
 
-
+    public static void main(String[] args) throws Throwable {
+        TestClass.getInstance();
+    }
 
 
 }
